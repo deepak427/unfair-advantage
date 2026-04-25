@@ -1,8 +1,10 @@
 # Google Cloud / Vertex AI
 google-adk
-google-cloud-aiplatform[rag]>=1.93.0
+google-cloud-aiplatform[rag]>=1.71.0
 google-cloud-storage>=2.18.0
-vertexai>=1.93.0
+
+# Gemini API (direct — no Vertex AI needed)
+google-generativeai>=0.8.0
 
 # Neo4j + Graphiti
 neo4j>=5.28.0

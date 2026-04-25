@@ -7,7 +7,6 @@ import vertexai
 from vertexai.preview import rag
 from loguru import logger
 from config.settings import settings
-from ingestion.pdf_extractor import Chunk
 
 _corpus: rag.RagCorpus | None = None
 
@@ -31,8 +30,10 @@ def get_or_create_corpus() -> rag.RagCorpus:
             _corpus = corpus
             return _corpus
 
-    # Create new corpus
-    logger.info(f"Creating RAG corpus: {settings.vertex_ai_rag_corpus_name}")
+    # Create corpus explicitly with RagManagedDb backend (serverless)
+    # Using embedding_model_config alone triggers the old Vertex Vector Search backend
+    # which requires allowlisting. RagManagedDb is the serverless backend — no allowlist needed.
+    logger.info(f"Creating RAG corpus (serverless backend): {settings.vertex_ai_rag_corpus_name}")
     _corpus = rag.create_corpus(
         display_name=settings.vertex_ai_rag_corpus_name,
         embedding_model_config=rag.EmbeddingModelConfig(
@@ -40,6 +41,7 @@ def get_or_create_corpus() -> rag.RagCorpus:
         ),
     )
     logger.info(f"Created corpus: {_corpus.name}")
+
     return _corpus
 
 
@@ -47,7 +49,6 @@ def ingest_gcs_file(gcs_uri: str) -> None:
     """
     Import a PDF directly from GCS into the RAG corpus.
     Vertex AI handles chunking + embedding automatically for GCS imports.
-    This is the recommended path for PDFs.
     """
     corpus = get_or_create_corpus()
     logger.info(f"Importing {gcs_uri} into RAG corpus...")
