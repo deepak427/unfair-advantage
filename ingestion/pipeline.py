@@ -36,8 +36,13 @@ async def ingest_book(pdf_path: str | Path) -> dict:
     # 3. Extract chunks locally for Graphiti
     chunks = extract_chunks(pdf_path)
 
-    # 4. Build knowledge graph
-    graph_result = await ingest_chunks_to_graph(chunks)
+    # 4. Build knowledge graph (skip if SKIP_GRAPH_BUILDING=true)
+    import os
+    if os.getenv("SKIP_GRAPH_BUILDING", "false").lower() == "true":
+        logger.info("Skipping graph building (SKIP_GRAPH_BUILDING=true)")
+        graph_result = {"episodes_created": 0, "errors": []}
+    else:
+        graph_result = await ingest_chunks_to_graph(chunks)
 
     elapsed = (datetime.now() - start).total_seconds()
 

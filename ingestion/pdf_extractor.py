@@ -62,9 +62,8 @@ def extract_chunks(pdf_path: str | Path) -> list[Chunk]:
 
 
 def _get_title(doc: fitz.Document, path: Path) -> str:
-    """Try PDF metadata first, fall back to filename."""
-    meta = doc.metadata or {}
-    return meta.get("title") or path.stem.replace("_", " ").replace("-", " ").title()
+    """Use filename as the primary title (cleaner than PDF metadata)."""
+    return path.stem.replace("_", " ").replace("-", " ").title()
 
 
 def _split_text(text: str, chunk_size: int, overlap: int) -> list[str]:

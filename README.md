@@ -5,7 +5,7 @@ Built with Google ADK, Vertex AI RAG Engine, Neo4j, and Graphiti.
 
 ## Stack
 - **Agent**: Google ADK + Gemini 2.5
-- **Vector Store**: Vertex AI RAG Engine (text-embedding-004)
+- **Vector Store**: Neon Postgres + pgvector (gemini-embedding-001)
 - **Knowledge Graph**: Neo4j AuraDB + Graphiti
 - **File Storage**: Google Cloud Storage
 - **PDF Processing**: PyMuPDF
