@@ -1,1 +1,0 @@
-"""Synthesis sub-agent."""

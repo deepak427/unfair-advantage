@@ -7,9 +7,9 @@ import os
 from google.adk.agents import LlmAgent
 from google.adk.tools.agent_tool import AgentTool
 from agent import prompt
-from agent.sub_agents.rag_agent.rag_agent import rag_agent
-from agent.sub_agents.graph_agent.graph_agent import graph_agent
-from agent.sub_agents.synthesis_agent.synthesis_agent import synthesis_agent
+from agent.sub_agents.rag_agent import create_rag_agent
+from agent.sub_agents.graph_agent import create_graph_agent
+from agent.sub_agents.synthesis_agent import create_synthesis_agent
 
 logger = logging.getLogger(__name__)
 
@@ -19,22 +19,26 @@ DESCRIPTION = (
     "from ingested books, then synthesizes grounded, cited answers."
 )
 
-root_agent = None
+def create_root_agent(book_key: str) -> LlmAgent:
+    rag_agent = create_rag_agent(book_key)
+    graph_agent = create_graph_agent(book_key)
+    synthesis_agent = create_synthesis_agent(book_key)
 
-if rag_agent and graph_agent and synthesis_agent:
-    root_agent = LlmAgent(
-        name="unfair_advantage",
-        model=GEMINI_MODEL,
-        description=DESCRIPTION,
-        instruction=prompt.ROOT_AGENT_PROMPT,
-        tools=[
-            AgentTool(rag_agent),
-            AgentTool(graph_agent),
-            AgentTool(synthesis_agent),
-        ],
-    )
-if root_agent:
-    logger.info("Root agent 'unfair_advantage' created")
-else:
-    logger.error("Cannot create root agent: one or more sub-agents failed to initialize")
+    if rag_agent and graph_agent and synthesis_agent:
+        root_agent = LlmAgent(
+            name=f"unfair_advantage_{book_key}",
+            model=GEMINI_MODEL,
+            description=DESCRIPTION,
+            instruction=prompt.get_root_agent_prompt(book_key),
+            tools=[
+                AgentTool(rag_agent),
+                AgentTool(graph_agent),
+                AgentTool(synthesis_agent),
+            ],
+        )
+        logger.info(f"Root agent created for book: {book_key}")
+        return root_agent
+    else:
+        logger.error("Cannot create root agent: one or more sub-agents failed to initialize")
+        return None
 

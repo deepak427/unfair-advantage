@@ -53,7 +53,13 @@ def _get_graphiti() -> Graphiti:
     return _graphiti
 
 
-async def search_graph(query: str, top_k: int = None) -> str:
+import re
+
+def _safe_group_id(filename: str) -> str:
+    """Graphiti group_id only allows alphanumeric, dashes, underscores."""
+    return re.sub(r"[^a-zA-Z0-9_-]", "-", filename)
+
+async def search_graph(query: str, book_filename: str = None, top_k: int = None) -> str:
     """
     Search the knowledge graph for concepts, relationships, and connections.
 
@@ -64,6 +70,8 @@ async def search_graph(query: str, top_k: int = None) -> str:
     Args:
         query: Concept or relationship to search for.
                Example: "identity change habits" or "deep work flow state"
+        book_filename: Context filter. Pass the original filename to restrict search.
+                       Example: "Gitapress_Gita_Roman.pdf" or "kojiki.pdf"
         top_k: Number of graph facts to return
 
     Returns:
@@ -74,7 +82,8 @@ async def search_graph(query: str, top_k: int = None) -> str:
     try:
         graphiti = _get_graphiti()
 
-        results = await graphiti.search(query, num_results=limit)
+        group_ids = [_safe_group_id(book_filename)] if book_filename else None
+        results = await graphiti.search(query, group_ids=group_ids, num_results=limit)
 
         if not results:
             return f"No graph relationships found for: '{query}'"

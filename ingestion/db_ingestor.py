@@ -136,21 +136,35 @@ async def save_chunks(chunks: list[Chunk], embeddings: list[list[float]]) -> int
     return len(chunks)
 
 
-async def vector_search(query_embedding: list[float], limit: int = 10) -> list[dict]:
-    """Find the most semantically similar chunks to a query."""
+async def vector_search(query_embedding: list[float], limit: int = 10, source_file: str = None) -> list[dict]:
+    """Find the most semantically similar chunks to a query optionally filtered by source file."""
     pool = await get_pool()
     vec_str = "[" + ",".join(map(str, query_embedding)) + "]"
     async with pool.acquire() as conn:
-        rows = await conn.fetch(
-            """
-            SELECT
-                id, book_title, source_file, chunk_index, content,
-                1 - (embedding <=> $1::vector) AS similarity
-            FROM chunks
-            WHERE embedding IS NOT NULL
-            ORDER BY embedding <=> $1::vector
-            LIMIT $2
-            """,
-            vec_str, limit
-        )
+        if source_file:
+            rows = await conn.fetch(
+                """
+                SELECT
+                    id, book_title, source_file, chunk_index, content,
+                    1 - (embedding <=> $1::vector) AS similarity
+                FROM chunks
+                WHERE embedding IS NOT NULL AND source_file = $3
+                ORDER BY embedding <=> $1::vector
+                LIMIT $2
+                """,
+                vec_str, limit, source_file
+            )
+        else:
+            rows = await conn.fetch(
+                """
+                SELECT
+                    id, book_title, source_file, chunk_index, content,
+                    1 - (embedding <=> $1::vector) AS similarity
+                FROM chunks
+                WHERE embedding IS NOT NULL
+                ORDER BY embedding <=> $1::vector
+                LIMIT $2
+                """,
+                vec_str, limit
+            )
     return [dict(r) for r in rows]
