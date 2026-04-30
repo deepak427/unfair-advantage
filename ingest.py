@@ -17,18 +17,20 @@ def header(n, title, why):
     print(f"  WHY: {why}")
     print(f"{'='*60}")
 
-def ok(msg):   print(f"  ✓  {msg}")
-def fail(msg): print(f"  ✗  {msg}")
-def info(msg): print(f"  ℹ  {msg}")
-def warn(msg): print(f"  ⚠  {msg}")
+def ok(msg):   print(f"  [OK]  {msg}")
+def fail(msg): print(f"  [FAIL] {msg}")
+def info(msg): print(f"  [INFO] {msg}")
+def warn(msg): print(f"  [WARN] {msg}")
 
 def pause():
     import time
     time.sleep(0.1)
     try:
-        input("\n  ▶  Press Enter to continue...")
+        if os.getenv("INGEST_AUTO", "false").lower() == "true":
+             return
+        input("\n  >>>  Press Enter to continue...")
     except EOFError:
-        print("\n  ℹ  (Automatic continue - terminal input restricted)")
+        print("\n  [INFO] (Automatic continue - terminal input restricted)")
 
 
 async def main():
@@ -83,13 +85,13 @@ async def main():
            "Safe to run multiple times — uses IF NOT EXISTS.")
     try:
         from ingestion.db_ingestor import setup_schema
-        info("Connecting to Neon Postgres...")
-        await setup_schema()
+        info("Connecting to Neon Postgres (60s timeout)...")
+        await asyncio.wait_for(setup_schema(), timeout=60)
         ok("Schema ready (tables + indexes exist)")
     except Exception as e:
         fail(f"Database setup failed: {e}")
         info("Check DATABASE_URL in .env — must be a valid Neon connection string")
-        info("Get it from: https://console.neon.tech → your project → Connection string")
+        info("Get it from: https://console.neon.tech -> your project -> Connection string")
         sys.exit(1)
     pause()
 
@@ -103,7 +105,7 @@ async def main():
         exists = await book_exists(pdf_path.name)
         if exists:
             warn(f"'{pdf_path.name}' is already in the database.")
-            answer = input("  ▶  Re-ingest and overwrite? (y/n): ").strip().lower()
+            answer = input("  >>>  Re-ingest and overwrite? (y/n): ").strip().lower()
             if answer != "y":
                 info("Skipping Postgres records. Proceeding to Knowledge Graph check...")
                 skip_postgres = True
@@ -165,14 +167,14 @@ async def main():
             "After this step, the book is fully searchable by meaning. "
             "The ivfflat index makes similarity search fast even with millions of chunks.")
         try:
-            from ingestion.db_ingestor import save_book_and_chunks
+            from ingestion.db_ingestor import save_chunks
             info(f"Saving {len(chunks)} chunks to Postgres...")
             
             # Combine chunks and embeddings
             for i, emb in enumerate(embeddings):
                 chunks[i].embedding = emb
             
-            success = await save_book_and_chunks(chunks)
+            success = await save_chunks(chunks, embeddings)
             if success:
                 ok("Postgres ingestion complete")
             else:

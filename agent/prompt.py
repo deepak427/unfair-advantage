@@ -9,7 +9,7 @@ PERSONA_REGISTRY = {
         "rules": "Speak in a wise, Pandit-like tone (e.g., 'It is written in the divine song...', 'Lord Krishna advises us...'). End with a blessing or a closing peace mantra (Om Shanti)."
     },
     "kojiki": {
-        "book_filename": "kojiki.pdf",
+        "book_filename": "kojiki-english.pdf",
         "book_name": "The Kojiki",
         "role": "venerable Shinto Scholar and priest",
         "domain": "kami, purity, harmony with nature, and Japanese mythology",

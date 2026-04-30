@@ -14,7 +14,19 @@ _pool = None
 async def get_pool():
     global _pool
     if _pool is None:
-        _pool = await asyncpg.create_pool(settings.database_url, min_size=2, max_size=10)
+        try:
+            _pool = await asyncpg.create_pool(
+                settings.database_url, 
+                min_size=2, 
+                max_size=10,
+                command_timeout=60,
+                timeout=60
+            )
+        except Exception as e:
+            import traceback
+            logger.error(f"Failed to create pool: {e}")
+            logger.error(traceback.format_exc())
+            raise
     return _pool
 
 
