@@ -7,7 +7,7 @@ from config.settings import settings
 from ingestion.db_ingestor import vector_search
 from ingestion.embedder import embed_query
 
-async def search_rag(query: str, top_k: int = None) -> str:
+async def search_rag(query: str, book_filename: str = None, top_k: int = None) -> str:
     """
     Search the book knowledge base using semantic similarity.
 
@@ -18,6 +18,8 @@ async def search_rag(query: str, top_k: int = None) -> str:
     Args:
         query: The search query — be specific for better results.
                Example: "habit loop cue routine reward"
+        book_filename: Context filter. Pass the original filename to restrict search.
+                       Example: "Gitapress_Gita_Roman.pdf" or "kojiki.pdf"
         top_k: Number of results to return
 
     Returns:
@@ -30,7 +32,7 @@ async def search_rag(query: str, top_k: int = None) -> str:
         query_embedding = await embed_query(query)
 
         # 2. Search Postgres
-        hits = await vector_search(query_embedding, limit=limit)
+        hits = await vector_search(query_embedding, limit=limit, source_file=book_filename)
 
         if not hits:
             return f"No results found for query: '{query}'"

@@ -1,1 +1,0 @@
-"""Graph search sub-agent."""
